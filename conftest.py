@@ -1,4 +1,7 @@
 import os
+from pathlib import Path
+from random import uniform, seed
+from typing import Dict
 
 import matplotlib
 matplotlib.use('agg')
@@ -73,3 +76,40 @@ def pytest_collection_modifyitems(config, items):
 
         if 'requires_bamboo' in item.keywords:
             item.add_marker(skip_outside_bamboo_test)
+
+
+@pytest.fixture()
+def behavior_stimuli_time_fixture(request):
+    """
+    Fixture that allows for parameterization of behavior_stimuli stimuli
+    time data.
+    """
+    data_points = request.param.get("data_points", 10)
+    max_time_stamp = request.param.get("max_time_stamp", 1000)
+    min_time_stamp = request.param.get("min_time_stamp", 0)
+    max_stimuli_duration = request.param.get("max_stimuli_duration", 100)
+    min_stimuli_duration = request.param.get("min_stimuli_duration", 10)
+    random_seed = request.param.get("random_seed", 0)
+
+    fixture_params = {
+        'data_points': data_points,
+        'max_time_stamp': max_time_stamp,
+        'min_time_stamp': min_time_stamp,
+        'max_stimuli_duration': max_stimuli_duration,
+        'min_stimuli_duration': min_stimuli_duration,
+        'random_seed': random_seed
+    }
+
+    seed(random_seed)
+    time_stamp_zero = uniform((min_time_stamp+min_stimuli_duration),
+                              (min_time_stamp+max_stimuli_duration))
+    time_stamps = [time_stamp_zero]
+    for i in range(1, data_points):
+        next_stim_min = time_stamps[i-1] + min_stimuli_duration
+        next_stim_max = min((time_stamps[i-1] + max_stimuli_duration),
+                            max_time_stamp)
+        time_stamp = uniform(next_stim_min, next_stim_max)
+        time_stamps.append(time_stamp)
+
+    return time_stamps, fixture_params
+
