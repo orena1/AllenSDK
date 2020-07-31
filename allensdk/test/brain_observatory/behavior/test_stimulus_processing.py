@@ -87,10 +87,50 @@ def test_get_draw_epochs(behavior_stimuli_data_fixture,
 #     # convert_filepath_caseinsensitive prevents using any tempdirs/tempfiles
 
 
-# def test_get_stimulus_presentations():
-#     pass
-#     # TODO
-#     # Monster function with undocumented dependencies
+@pytest.mark.parametrize("behavior_stimuli_time_fixture,"
+                         "behavior_stimuli_data_fixture, "
+                         "expected", [
+                             ({"timestamp_count": 15, "time_step": 1},
+                              {"images_set_log": [
+                                  ('Image', 'im065', 5, 0),
+                                  ('Image', 'im064', 25, 6)
+                              ],
+                                  "images_draw_log": (([0] * 2 + [1] * 2 +
+                                                       [0] * 3) * 2 + [0]),
+                                  "grating_set_log": [
+                                      ("Ori", 90, 3.5, 0),
+                                      ("Ori", 270, 15, 6)
+                                  ],
+                                  "grating_draw_log": (([0] + [1] * 3 + [0] * 3)
+                                                       * 2 + [0])},
+                              {"orientation": [90, None, 270, None],
+                               "image_name": [None, 'im065', None, 'im064'],
+                               "start_frame": [2.0, 3.0, 9.0, 10.0],
+                               "end_frame": [5.0, 5.0, 12.0, 12.0],
+                               "start_time": [2, 3, 9, 10],
+                               "stop_time": [5, 5, 12, 12],
+                               "duration": [3.0, 2.0, 3.0, 2.0],
+                               "omitted": [False, False, False, False],
+                               "stimulus_presentations_id": [0, 1, 2, 3]})
+                         ], indirect=['behavior_stimuli_time_fixture',
+                                      'behavior_stimuli_data_fixture'])
+def test_get_stimulus_presentations(behavior_stimuli_time_fixture,
+                                    behavior_stimuli_data_fixture,
+                                    expected):
+    (behavior_stimuli_times,
+     behavior_fixture_params) = behavior_stimuli_time_fixture
+    presentations_df = get_stimulus_presentations(
+        behavior_stimuli_data_fixture,
+        behavior_stimuli_times)
+
+    presentations_df = presentations_df.drop('index', axis=1)
+
+    expected_df = pd.DataFrame.from_dict(expected)
+    expected_df.set_index('stimulus_presentations_id', inplace=True)
+    expected_df = expected_df[sorted(expected_df.columns)]
+
+    assert presentations_df.equals(expected_df)
+
 
 @pytest.mark.parametrize("behavior_stimuli_time_fixture,"
                          "behavior_stimuli_data_fixture,"

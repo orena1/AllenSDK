@@ -10,7 +10,6 @@ IMAGE_SETS_REV = {val: key for key, val in IMAGE_SETS.items()}
 
 
 def convert_filepath_caseinsensitive(filename_in):
-
     if filename_in == '//allen/programs/braintv/workgroups/nc-ophys/Doug/Stimulus_Code/image_dictionaries/Natural_Images_Lum_Matched_set_ophys_6_2017.07.14.pkl':
         return '//allen/programs/braintv/workgroups/nc-ophys/Doug/Stimulus_Code/image_dictionaries/Natural_Images_Lum_Matched_set_ophys_6_2017.07.14.pkl'
     elif filename_in == '//allen/programs/braintv/workgroups/nc-ophys/Doug/Stimulus_Code/image_dictionaries/Natural_Images_Lum_Matched_set_training_2017.07.14.pkl':
@@ -23,7 +22,7 @@ def convert_filepath_caseinsensitive(filename_in):
         return '//allen/programs/braintv/workgroups/nc-ophys/visual_behavior/image_dictionaries/Natural_Images_Lum_Matched_set_ophys_6_2017.07.14.pkl'
     elif filename_in == '//allen/programs/braintv/workgroups/nc-ophys/visual_behavior/image_dictionaries/Natural_Images_Lum_Matched_set_ophys_G_2019.05.26.pkl':
         return '//allen/programs/braintv/workgroups/nc-ophys/visual_behavior/image_dictionaries/Natural_Images_Lum_Matched_set_ophys_G_2019.05.26.pkl'
-    elif filename_in ==  '//allen/programs/braintv/workgroups/nc-ophys/visual_behavior/image_dictionaries/Natural_Images_Lum_Matched_set_ophys_H_2019.05.26.pkl':
+    elif filename_in == '//allen/programs/braintv/workgroups/nc-ophys/visual_behavior/image_dictionaries/Natural_Images_Lum_Matched_set_ophys_H_2019.05.26.pkl':
         return '//allen/programs/braintv/workgroups/nc-ophys/visual_behavior/image_dictionaries/Natural_Images_Lum_Matched_set_ophys_H_2019.05.26.pkl'
     else:
         raise NotImplementedError(filename_in)
@@ -47,8 +46,10 @@ def get_stimulus_presentations(data, stimulus_timestamps) -> pd.DataFrame:
     stimulus_table = get_visual_stimuli_df(data, stimulus_timestamps)
     # workaround to rename columns to harmonize with visual coding and rebase timestamps to sync time
     stimulus_table.insert(loc=0, column='flash_number', value=np.arange(0, len(stimulus_table)))
-    stimulus_table = stimulus_table.rename(columns={'frame': 'start_frame', 'time': 'start_time', 'flash_number':'stimulus_presentations_id'})
-    stimulus_table.start_time = [stimulus_timestamps[int(start_frame)] for start_frame in stimulus_table.start_frame.values]
+    stimulus_table = stimulus_table.rename(
+        columns={'frame': 'start_frame', 'time': 'start_time', 'flash_number': 'stimulus_presentations_id'})
+    stimulus_table.start_time = [stimulus_timestamps[int(start_frame)] for start_frame in
+                                 stimulus_table.start_frame.values]
     end_time = []
     for end_frame in stimulus_table.end_frame.values:
         if not np.isnan(end_frame):
@@ -63,7 +64,6 @@ def get_stimulus_presentations(data, stimulus_timestamps) -> pd.DataFrame:
 
 
 def get_images_dict(pkl):
-
     # Sometimes the source is a zipped pickle:
     metadata = {'image_set': pkl["items"]["behavior"]["stimuli"]["images"]["image_path"]}
 
@@ -98,31 +98,28 @@ def get_images_dict(pkl):
 
 
 def get_stimulus_templates(pkl):
-
     images = get_images_dict(pkl)
     image_set_filename = convert_filepath_caseinsensitive(images['metadata']['image_set'])
     return {IMAGE_SETS_REV[image_set_filename]: np.array(images['images'])}
 
 
 def get_stimulus_metadata(pkl):
-
     images = get_images_dict(pkl)
     stimulus_index_df = pd.DataFrame(images['image_attributes'])
     image_set_filename = convert_filepath_caseinsensitive(images['metadata']['image_set'])
     stimulus_index_df['image_set'] = IMAGE_SETS_REV[image_set_filename]
 
     # Add an entry for omitted stimuli
-    omitted_df = pd.DataFrame({'image_category':['omitted'],
-                               'image_name':['omitted'],
-                               'image_set':['omitted'],
-                               'image_index':[stimulus_index_df['image_index'].max()+1]})
+    omitted_df = pd.DataFrame({'image_category': ['omitted'],
+                               'image_name': ['omitted'],
+                               'image_set': ['omitted'],
+                               'image_index': [stimulus_index_df['image_index'].max() + 1]})
     stimulus_index_df = stimulus_index_df.append(omitted_df, ignore_index=True, sort=False)
     stimulus_index_df.set_index(['image_index'], inplace=True, drop=True)
     return stimulus_index_df
 
 
 def _resolve_image_category(change_log, frame):
-
     for change in (unpack_change_log(c) for c in change_log):
         if frame < change['frame']:
             return change['from_category']
@@ -132,9 +129,9 @@ def _resolve_image_category(change_log, frame):
 
 def _get_stimulus_epoch(set_log, current_set_index, start_frame, n_frames):
     try:
-        next_set_event = set_log[current_set_index + 1]# attr_name, attr_value, time, frame
+        next_set_event = set_log[current_set_index + 1]  # attr_name, attr_value, time, frame
     except IndexError:  # assume this is the last set event
-        next_set_event = (None, None, None, n_frames, )
+        next_set_event = (None, None, None, n_frames,)
 
     return (start_frame, next_set_event[3])  # end frame isnt inclusive
 
@@ -155,14 +152,14 @@ def _get_draw_epochs(draw_log, start_frame, stop_frame):
 
         if epoch_length:
             draw_epochs.append(
-                (current_frame - epoch_length - 1, current_frame - 1, )
+                (current_frame - epoch_length - 1, current_frame - 1,)
             )
 
     return draw_epochs
 
+
 def unpack_change_log(change):
-    
-    (from_category, from_name), (to_category, to_name, ), time, frame = change
+    (from_category, from_name), (to_category, to_name,), time, frame = change
 
     return dict(
         frame=frame,
@@ -194,7 +191,7 @@ def get_visual_stimuli_df(data, time) -> pd.DataFrame:
     n_frames = len(time)
     visual_stimuli_data = []
     for stimuli_group_name, stim_dict in stimuli.items():
-        for idx, (attr_name, attr_value, _time, frame, ) in \
+        for idx, (attr_name, attr_value, _time, frame,) in \
                 enumerate(stim_dict["set_log"]):
             orientation = attr_value if attr_name.lower() == "ori" else np.nan
             image_name = attr_value if attr_name.lower() == "image" else np.nan
@@ -210,8 +207,7 @@ def get_visual_stimuli_df(data, time) -> pd.DataFrame:
                 *stimulus_epoch
             )
 
-            for idx, (epoch_start, epoch_end, ) in enumerate(draw_epochs):
-
+            for idx, (epoch_start, epoch_end,) in enumerate(draw_epochs):
                 # visual stimulus doesn't actually change until start of
                 # following frame, so we need to bump the epoch_start & epoch_end
                 # to get the timing right
@@ -224,7 +220,8 @@ def get_visual_stimuli_df(data, time) -> pd.DataFrame:
                     "frame": epoch_start,
                     "end_frame": epoch_end,
                     "time": time[epoch_start],
-                    "duration": time[epoch_end] - time[epoch_start],  # this will always work because an epoch will never occur near the end of time
+                    "duration": time[epoch_end] - time[epoch_start],
+                    # this will always work because an epoch will never occur near the end of time
                     "omitted": False,
                 })
 
@@ -235,9 +232,9 @@ def get_visual_stimuli_df(data, time) -> pd.DataFrame:
     # if images are contained in stimuli
     if 'images' in stimuli.keys():
         # ensure that every rising edge in the draw_log is accounted for in the visual_stimuli_df
-        draw_log_rising_edges = len(np.where(np.diff(stimuli['images']['draw_log'])==1)[0])
+        draw_log_rising_edges = len(np.where(np.diff(stimuli['images']['draw_log']) == 1)[0])
     if 'grating' in stimuli.keys():
-        draw_log_gratings = len(np.where(np.diff(stimuli['grating']['draw_log'])==1)[0])
+        draw_log_gratings = len(np.where(np.diff(stimuli['grating']['draw_log']) == 1)[0])
 
     discrete_flashes = len(visual_stimuli_data)
     assert (draw_log_rising_edges +
@@ -248,7 +245,6 @@ def get_visual_stimuli_df(data, time) -> pd.DataFrame:
     omitted_flash_frame_log = data['items']['behavior']['omitted_flash_frame_log']
 
     for stimuli_group_name, omitted_flash_frames in omitted_flash_frame_log.items():
-
         stim_frames = visual_stimuli_df['frame'].values
         omitted_flash_frames = np.array(omitted_flash_frames)
 
@@ -271,4 +267,3 @@ def get_visual_stimuli_df(data, time) -> pd.DataFrame:
 
     df = pd.concat((visual_stimuli_df, omitted_df), sort=False).sort_values('frame').reset_index()
     return df
-
