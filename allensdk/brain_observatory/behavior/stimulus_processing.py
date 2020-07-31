@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pickle
 import json
-from typing import Dict
+from typing import Dict, List, Tuple, Union
 
 from allensdk.brain_observatory.behavior import IMAGE_SETS
 
@@ -127,17 +127,65 @@ def _resolve_image_category(change_log, frame):
     return change['to_category']
 
 
-def _get_stimulus_epoch(set_log, current_set_index, start_frame, n_frames):
+def _get_stimulus_epoch(set_log: List[Tuple[str, Union[str, int], int, int]],
+                        current_set_index: int, start_frame: int,
+                        n_frames: int) -> Tuple[int, int]:
+    """
+    Gets the frame range for which a stimuli was presented and the transition
+    to the next stimuli was ongoing. Returns this in the form of a tuple.
+    Parameters
+    ----------
+    set_log: List[Tuple[str, Union[str, int], int, int
+        The List of Tuples in the form of
+        (stimuli_type ('Image' or 'Grating'),
+         stimuli_descriptor (image_name or orientation of grating in degrees),
+         nonsynced_time_of_display (not sure, it's never used),
+         display_frame (frame that stimuli was displayed))
+    current_set_index: int
+        Index of stimuli set to calculate window
+    start_frame: int
+        frame where stimuli was set, set_log[current_set_index][3]
+    n_frames: int
+        number of frames for which stimuli were displayed
+
+    Returns
+    -------
+    Tuple[int, int]:
+        A tuple where index 0 is start frame of stimulus window and index 1 is
+        end frame of stimulus window
+
+    """
     try:
-        next_set_event = set_log[current_set_index + 1]  # attr_name, attr_value, time, frame
+        next_set_event = set_log[current_set_index + 1]
     except IndexError:  # assume this is the last set event
         next_set_event = (None, None, None, n_frames,)
 
-    return (start_frame, next_set_event[3])  # end frame isnt inclusive
+    return start_frame, next_set_event[3]  # end frame isn't inclusive
 
 
-def _get_draw_epochs(draw_log, start_frame, stop_frame):
-    """start_frame inclusive, stop_frame non-inclusive
+def _get_draw_epochs(draw_log: List[int], start_frame: int,
+                     stop_frame: int) -> List[Tuple[int, int]]:
+    """
+    Gets the frame numbers of the active frames within a stimulus window.
+    Stimulus epochs come in the form [0, 0, 1, 1, 0, 0] where the stimulus is
+    active for some amount of time in the window indicated by int 1 at that
+    frame. This function returns the ranges for which the set_log is 1 within
+    the draw_log window.
+    Parameters
+    ----------
+    draw_log: List[int]
+        A list of ints indicating for what frames stimuli were active
+    start_frame: int
+        The start frame to search within the draw_log for active values
+    stop_frame: int
+        The end frame to search within the draw_log for active values
+
+    Returns
+    -------
+    List[Tuple[int, int]]
+        A list of tuples indicating the start and end frames of every
+        contiguous set of active values within the specified window
+        of the draw log.
     """
     draw_epochs = []
     current_frame = start_frame
