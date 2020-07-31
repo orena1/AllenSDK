@@ -129,13 +129,15 @@ def _resolve_image_category(change_log, frame):
 
     return change['to_category']
 
+
 def _get_stimulus_epoch(set_log, current_set_index, start_frame, n_frames):
     try:
-        next_set_event = set_log[current_set_index + 1]  # attr_name, attr_value, time, frame
+        next_set_event = set_log[current_set_index + 1]# attr_name, attr_value, time, frame
     except IndexError:  # assume this is the last set event
         next_set_event = (None, None, None, n_frames, )
 
     return (start_frame, next_set_event[3])  # end frame isnt inclusive
+
 
 def _get_draw_epochs(draw_log, start_frame, stop_frame):
     """start_frame inclusive, stop_frame non-inclusive
@@ -265,7 +267,7 @@ def get_visual_stimuli_df(data, time) -> pd.DataFrame:
     omitted = np.ones_like(omitted_flash_list).astype(bool)
     time = [time[fi] for fi in omitted_flash_list]
     omitted_df = pd.DataFrame({'omitted': omitted, 'frame': omitted_flash_list, 'time': time,
-                               'image_name':'omitted'})
+                               'image_name': 'omitted'})
 
     df = pd.concat((visual_stimuli_df, omitted_df), sort=False).sort_values('frame').reset_index()
     return df

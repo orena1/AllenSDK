@@ -1,11 +1,10 @@
 import os
-from pathlib import Path
-from random import uniform, seed
-from typing import Dict
 
 import matplotlib
 matplotlib.use('agg')
 import pytest  # noqa: E402
+import numpy as np  # noqa: E402
+
 from allensdk.test_utilities.temp_dir import temp_dir  # noqa: E402
 
 
@@ -84,32 +83,55 @@ def behavior_stimuli_time_fixture(request):
     Fixture that allows for parameterization of behavior_stimuli stimuli
     time data.
     """
-    data_points = request.param.get("data_points", 10)
-    max_time_stamp = request.param.get("max_time_stamp", 1000)
-    min_time_stamp = request.param.get("min_time_stamp", 0)
-    max_stimuli_duration = request.param.get("max_stimuli_duration", 100)
-    min_stimuli_duration = request.param.get("min_stimuli_duration", 10)
-    random_seed = request.param.get("random_seed", 0)
+    timestamp_count = request.param.get("timestamp_count", 22)
+    time_step = request.param.get("time_step", 0.016)
 
     fixture_params = {
-        'data_points': data_points,
-        'max_time_stamp': max_time_stamp,
-        'min_time_stamp': min_time_stamp,
-        'max_stimuli_duration': max_stimuli_duration,
-        'min_stimuli_duration': min_stimuli_duration,
-        'random_seed': random_seed
+        "timestamp_count": timestamp_count,
+        "time_step": time_step
     }
 
-    seed(random_seed)
-    time_stamp_zero = uniform((min_time_stamp+min_stimuli_duration),
-                              (min_time_stamp+max_stimuli_duration))
-    time_stamps = [time_stamp_zero]
-    for i in range(1, data_points):
-        next_stim_min = time_stamps[i-1] + min_stimuli_duration
-        next_stim_max = min((time_stamps[i-1] + max_stimuli_duration),
-                            max_time_stamp)
-        time_stamp = uniform(next_stim_min, next_stim_max)
-        time_stamps.append(time_stamp)
+    timestamps = np.array([time_step * i for i in range(timestamp_count)])
 
-    return time_stamps, fixture_params
+    return timestamps, fixture_params
 
+
+@pytest.fixture()
+def behavior_stimuli_data_fixture(request):
+    """
+    This fixture mimicks the behavior experiment stimuli data logs and
+    allows parameterization for testing
+    """
+    images_set_log = request.param.get("images_set_log", [
+        ('Image', 'im065', 5.809, 0)])
+    images_draw_log = request.param.get("images_draw_log", [
+        ([0] + [1]*3 + [0]*3)
+    ])
+    grating_set_log = request.param.get("grating_set_log", [
+        ('Ori', 90, 3.585, 0)
+    ])
+    grating_draw_log = request.param.get("grating_draw_log", [
+        ([0] + [1]*3 + [0]*3)
+    ])
+    omitted_flash_frame_log = request.param.get("omitted_flash_frame_log", {
+        "grating_0": []
+    })
+
+    data = {
+        "items": {
+            "behavior": {
+                "stimuli": {
+                    "images": {
+                        "set_log": images_set_log,
+                        "draw_log": images_draw_log
+                    },
+                    "grating": {
+                        "set_log": grating_set_log,
+                        "draw_log": grating_draw_log
+                    }
+                },
+                "omitted_flash_frame_log": omitted_flash_frame_log
+            }
+        }
+    }
+    return data
