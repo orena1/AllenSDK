@@ -248,6 +248,10 @@ class BehaviorDataLimsApi(CachedInstanceMethodMixin, BehaviorBase):
                                  " are null.")
 
         print(data['items']['behavior']['stimuli']['grating'].keys())
+        print(data['items']['behavior']['stimuli']['grating']['possibility_table'].keys())
+        print(data['items']['behavior']['stimuli']['grating']['phase'])
+        print(data['items']['behavior']['stimuli']['grating']['correct_freq'])
+
         stimulus_metadata_df = get_stimulus_metadata(data)
         idx_name = raw_stim_pres_df.index.name
         stimulus_index_df = (
