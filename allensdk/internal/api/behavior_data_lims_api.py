@@ -247,6 +247,7 @@ class BehaviorDataLimsApi(CachedInstanceMethodMixin, BehaviorBase):
                 raise ValueError("All values for 'orentation' and 'image_name'"
                                  " are null.")
 
+        print(data['items']['behavior']['stimuli']['grating'].keys())
         stimulus_metadata_df = get_stimulus_metadata(data)
         idx_name = raw_stim_pres_df.index.name
         stimulus_index_df = (
