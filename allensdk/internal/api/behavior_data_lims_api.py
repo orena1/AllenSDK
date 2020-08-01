@@ -249,6 +249,7 @@ class BehaviorDataLimsApi(CachedInstanceMethodMixin, BehaviorBase):
 
         print(data['items']['behavior']['stimuli']['grating'].keys())
         print(data['items']['behavior']['stimuli']['grating']['stim_groups'])
+        print(data['items']['behavior']['stimuli']['grating']['set_log'])
         print(data['items']['behavior']['stimuli']['grating']['phase'])
         print(data['items']['behavior']['stimuli']['grating']['correct_freq'])
 
