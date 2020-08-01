@@ -248,7 +248,6 @@ class BehaviorDataLimsApi(CachedInstanceMethodMixin, BehaviorBase):
                                  " are null.")
 
         print(data['items']['behavior']['stimuli']['grating'].keys())
-        print(data['items']['behavior']['stimuli']['grating']['possibility_table'].keys())
         print(data['items']['behavior']['stimuli']['grating']['phase'])
         print(data['items']['behavior']['stimuli']['grating']['correct_freq'])
 
